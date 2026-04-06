@@ -1,0 +1,126 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Manage Registrations — CampusFlow{% endblock %}
+{% block page_title %}Event Registrations{% endblock %}
+
+{% block content %}
+
+<div class="section-header animate-in">
+  <div>
+    <div class="section-title">Manage Participants</div>
+    <div class="section-sub">Approve or reject student registrations</div>
+  </div>
+</div>
+
+<div class="card animate-in delay-1" style="margin-bottom:1.5rem;">
+  <form method="GET" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+
+    <select name="event" class="input">
+      <option value="">Select Event</option>
+
+      {% for event in events %}
+        <option value="{{ event.id }}"
+          {% if event.id|stringformat:"s" == selected_event_id %}
+            selected
+          {% endif %}
+        >
+          {{ event.title }} ({{ event.club.name }})
+        </option>
+      {% endfor %}
+
+    </select>
+
+    <button type="submit" class="btn btn-primary btn-sm">
+      Load Registrations
+    </button>
+
+  </form>
+</div>
+
+{% if registrations %}
+
+<div class="card animate-in delay-1" style="padding:0;">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Event</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% for reg in registrations %}
+        <tr>
+
+          <!-- Student -->
+          <td style="color:var(--text); font-weight:500;">
+            {{ reg.student.username }}
+          </td>
+
+          <!-- Event -->
+          <td>
+            {{ reg.event.title }}
+          </td>
+
+          <!-- Status -->
+          <td>
+            {% if reg.status == 'pending' %}
+              <span class="badge badge-blue">⏳ Pending</span>
+
+            {% elif reg.status == 'approved' %}
+              <span class="badge badge-green">✅ Approved</span>
+
+            {% elif reg.status == 'rejected' %}
+              <span class="badge" style="background:rgba(239,68,68,0.15); color:#ef4444;">
+                ❌ Rejected
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td>
+
+            {% if reg.status == 'pending' %}
+
+              <a href="{% url 'update_registration' reg.id 'approve' %}" 
+                 class="btn btn-primary btn-sm">
+                Approve
+              </a>
+
+              <a href="{% url 'update_registration' reg.id 'reject' %}" 
+                 class="btn btn-ghost btn-sm">
+                Reject
+              </a>
+
+            {% else %}
+              <span style="color:var(--text3); font-size:0.8rem;">
+                No action
+              </span>
+            {% endif %}
+
+          </td>
+
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+
+<!-- Empty -->
+<div class="empty-state animate-in">
+  <div class="empty-state-icon">📭</div>
+  <h3>No registrations yet</h3>
+  <p>No students have registered for your events.</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

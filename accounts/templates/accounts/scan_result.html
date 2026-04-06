@@ -1,0 +1,37 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Scan Result{% endblock %}
+{% block page_title %}QR Check-in{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">QR Scan Result</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1rem; text-align:center;">
+
+  {% if error %}
+    <h3 style="color:var(--red);">{{ error }}</h3>
+
+  {% else %}
+    <h2 style="color:var(--green);">✅ Check-in Successful</h2>
+
+    <p style="margin-top:1rem;">
+      <strong>Student:</strong> {{ registration.student.username }}
+    </p>
+
+    <p>
+      <strong>Event:</strong> {{ registration.event.title }}
+    </p>
+
+    <p>
+      <strong>Date:</strong> {{ registration.event.date }}
+    </p>
+  {% endif %}
+
+</div>
+
+{% endblock %}

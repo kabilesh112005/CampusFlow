@@ -1,0 +1,111 @@
+<!-- accounts/templates/accounts/book.html -->
+{% extends 'accounts/base.html' %}
+
+{% block title %}Book Venue — CampusFlow{% endblock %}
+{% block page_title %}Book Venue{% endblock %}
+{% block nav_book %}active{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="section-header animate-in" style="margin-bottom:1.5rem;">
+  <div>
+    <div class="section-title">Book a Venue</div>
+    <div class="section-sub">Reserve a space for one of your events</div>
+  </div>
+  <a href="{% url 'dashboard' %}" class="btn btn-ghost btn-sm">← Dashboard</a>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+
+  <!-- ── Booking Form ── -->
+  <div class="card animate-in delay-1">
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-weight:600; font-size:0.95rem; margin-bottom:0.2rem;">New Booking</div>
+      <div style="font-size:0.8rem; color:var(--text3);">
+        Select the event and the venue you want to reserve.
+      </div>
+    </div>
+
+    <form method="POST" novalidate>
+      {% csrf_token %}
+
+      <!-- Non-field errors -->
+      {% if form.non_field_errors %}
+      <div class="form-error-box">
+        {% for error in form.non_field_errors %}
+          <div>⚠ {{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Event dropdown -->
+      <div class="form-group {% if form.event.errors %}has-error{% endif %}">
+        {{ form.event.label_tag }}
+        {{ form.event }}
+        {% for error in form.event.errors %}
+          <div class="field-error">{{ error }}</div>
+        {% endfor %}
+        <div style="font-size:0.75rem; color:var(--text3); margin-top:0.35rem;">
+          Only events you manage are shown.
+        </div>
+      </div>
+
+      <!-- Venue dropdown -->
+      <div class="form-group {% if form.venue.errors %}has-error{% endif %}">
+        {{ form.venue.label_tag }}
+        {{ form.venue }}
+        {% for error in form.venue.errors %}
+          <div class="field-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <hr class="divider"/>
+
+      <button type="submit" class="btn btn-primary btn-full">
+        🏛 Confirm Booking
+      </button>
+
+    </form>
+  </div>
+
+  <!-- ── Existing Bookings ── -->
+  <div class="animate-in delay-2">
+    <div style="margin-bottom:1rem;">
+      <div style="font-size:0.95rem; font-weight:600;">Recent Bookings</div>
+      <div style="font-size:0.8rem; color:var(--text3);">Last 10 confirmed venue reservations</div>
+    </div>
+
+    {% if existing_bookings %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Venue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in existing_bookings %}
+          <tr>
+            <td style="color:var(--text);">{{ booking.event.title }}</td>
+            <td>
+              <span class="badge badge-blue">{{ booking.venue }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:2.5rem;">
+      <div class="empty-state-icon">🏛</div>
+      <h3>No bookings yet</h3>
+      <p>Use the form to make your first venue booking.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

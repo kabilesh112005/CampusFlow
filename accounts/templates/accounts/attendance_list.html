@@ -1,0 +1,77 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Attendance{% endblock %}
+{% block page_title %}Attendance Sheet{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">Attendance 📋</div>
+  </div>
+</div>
+
+<div class="table-wrap">
+
+<a href="{% url 'export_attendance' %}" class="btn btn-primary">
+  Download Excel 📥
+</a>
+
+{% if selected_event_id %}
+  <a href="{% url 'qr_scanner' selected_event_id %}" class="btn btn-primary">
+    Open Scanner 📷
+  </a>
+{% endif %}
+
+<form method="GET" style="margin-bottom:1rem; display:flex; gap:10px;">
+
+  <select name="event" onchange="this.form.submit()">
+    <option value="">Select Event</option>
+
+    {% for event in events %}
+      <option value="{{ event.id }}" {% if event.id|stringformat:"s" == selected_event_id %}selected{% endif %}>
+        {{ event.title }}
+      </option>
+    {% endfor %}
+
+  </select>
+
+  {% if not registrations %}
+  <div class="empty-state">
+    <h3>Select an event to view attendance</h3>
+  </div>
+{% endif %}
+
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Student</th>
+      <th>Event</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for reg in registrations %}
+    
+    <tr>
+      <td>{{ reg.student.username }}</td>
+      <td>{{ reg.event.title }}</td>
+      <td>
+        {% if reg.is_attended %}
+          ✅ Attended
+        {% else %}
+          ❌ Not Attended
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+
+</table>
+
+</div>
+
+{% endblock %}

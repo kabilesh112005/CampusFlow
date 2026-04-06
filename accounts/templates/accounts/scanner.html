@@ -1,0 +1,69 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}QR Scanner{% endblock %}
+{% block page_title %}Scan QR{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">QR Scanner 📷</div>
+    <div class="section-sub">Scan student QR to mark attendance</div>
+  </div>
+</div>
+
+<div class="card" style="text-align:center; margin-top:1rem;">
+
+  <!-- Camera Select -->
+  <select id="cameraSelect" style="margin-bottom:10px;"></select>
+
+  <!-- Scanner -->
+  <div id="reader" style="width:300px; margin:auto;"></div>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+const html5QrCode = new Html5Qrcode("reader");
+const cameraSelect = document.getElementById("cameraSelect");
+
+// 🔊 Beep sound
+const beep = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
+
+Html5Qrcode.getCameras().then(devices => {
+
+  devices.forEach(device => {
+    const option = document.createElement("option");
+    option.value = device.id;
+    option.text = device.label || "Camera";
+    cameraSelect.appendChild(option);
+  });
+
+  startScanner(devices[0].id);
+});
+
+// Start scanner
+function startScanner(cameraId) {
+  html5QrCode.start(
+    cameraId,
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+
+      beep.play(); // 🔊 sound
+
+      // 🔥 redirect to scan
+      window.location.href = "/scan/{{ event_id }}/" + qrCodeMessage + "/";
+    }
+  );
+}
+
+// Change camera
+cameraSelect.addEventListener("change", e => {
+  html5QrCode.stop().then(() => {
+    startScanner(e.target.value);
+  });
+});
+</script>
+
+{% endblock %}

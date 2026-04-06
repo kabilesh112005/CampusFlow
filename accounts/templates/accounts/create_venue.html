@@ -1,0 +1,22 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+<h2>Add Venue</h2>
+
+<form method="POST">
+  {% csrf_token %}
+  <input type="text" name="name" placeholder="Venue Name" required>
+  <input type="text" name="location" placeholder="Location" required>
+  <input type="number" name="capacity" placeholder="Capacity" required>
+  <button type="submit">Add Venue</button>
+</form>
+
+<hr>
+
+<h3>Your Venues</h3>
+{% for v in venues %}
+  <p>{{ v.name }} - {{ v.location }} ({{ v.capacity }})</p>
+{% endfor %}
+
+{% endblock %}

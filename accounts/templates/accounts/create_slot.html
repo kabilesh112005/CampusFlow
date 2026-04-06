@@ -1,0 +1,38 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+<h2>Create Slot</h2>
+
+<form method="POST">
+  {% csrf_token %}
+
+  <select name="venue" required>
+    <option value="">Select Venue</option>
+    {% for v in venues %}
+      <option value="{{ v.id }}">{{ v.name }}</option>
+    {% endfor %}
+  </select>
+
+  <input type="date" name="date" required>
+  <input type="time" name="start_time" required>
+  <input type="time" name="end_time" required>
+
+  <button type="submit">Create Slot</button>
+</form>
+
+<hr>
+
+<h3>Slots</h3>
+{% for s in slots %}
+  <p>
+    {{ s.venue.name }} | {{ s.date }} | {{ s.start_time }} - {{ s.end_time }}
+    {% if s.is_available %}
+      ✅ Available
+    {% else %}
+      ❌ Booked
+    {% endif %}
+  </p>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,60 @@
+<!-- accounts/templates/accounts/login.html -->
+{% extends 'accounts/base.html' %}
+{% block title %}Sign In — CampusFlow{% endblock %}
+
+{# Auth pages have no sidebar — override block to empty #}
+{% block sidebar %}{% endblock %}
+
+{% block auth_content %}
+<div class="auth-page">
+
+  {% if messages %}
+  <div style="width:100%;max-width:440px;margin-bottom:1rem;">
+    {% for message in messages %}
+      <div class="msg msg-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <a href="{% url 'login' %}" class="brand-mark">
+    <span class="brand-mark-icon">🎓</span>
+    <span class="brand-mark-name">CampusFlow</span>
+  </a>
+
+  <div class="auth-card">
+    <h1 class="auth-card-title">Welcome back</h1>
+    <p class="auth-card-sub">Sign in to your CampusFlow account</p>
+
+    <form method="POST" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="non-field-errors">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="form-group {% if form.username.errors %}has-error{% endif %}">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {% for e in form.username.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div class="form-group {% if form.password.errors %}has-error{% endif %}">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        {% for e in form.password.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
+        Sign In
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="{% url 'register' %}">Create one</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'accounts/base.html' %}
+{% block nav_create %}active{% endblock %}
+
+{% block title %}Create Event — CampusFlow{% endblock %}
+{% block page_title %}Create Event{% endblock %}
+
+{% block content %}
+
+<div class="section-header animate-in">
+  <div>
+    <div class="section-title">Create Event 🎯</div>
+    <div class="section-sub">Organize a new event for your club</div>
+  </div>
+</div>
+
+<div class="card animate-in delay-1" style="max-width:600px;">
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="form-group">
+        <label>{{ field.label }}</label>
+        {{ field }}
+
+        {% if field.errors %}
+          <div class="field-error">
+            {{ field.errors.0 }}
+          </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+  <div style="color:red; margin-bottom:10px;">
+    {{ form.non_field_errors.0 }}
+  </div>
+{% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary btn-full">
+      Create Event 🚀
+    </button>
+
+  </form>
+
+</div>
+
+{% endblock %}

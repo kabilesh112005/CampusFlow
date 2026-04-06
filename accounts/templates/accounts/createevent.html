@@ -1,0 +1,101 @@
+<!-- accounts/templates/accounts/create_event.html -->
+{% extends 'accounts/base.html' %}
+
+{% block title %}Create Event — CampusFlow{% endblock %}
+{% block page_title %}Create Event{% endblock %}
+{% block nav_create %}active{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="section-header animate-in" style="margin-bottom:1.5rem;">
+  <div>
+    <div class="section-title">Create New Event</div>
+    <div class="section-sub">Fill in the details below to schedule an event</div>
+  </div>
+  <a href="{% url 'events' %}" class="btn btn-ghost btn-sm">← Back to Events</a>
+</div>
+
+<!-- Form card -->
+<div class="card animate-in delay-1" style="max-width:640px;">
+
+  <form method="POST" novalidate>
+    {% csrf_token %}
+
+    <!-- Non-field errors (e.g. end time before start time) -->
+    {% if form.non_field_errors %}
+    <div class="form-error-box">
+      {% for error in form.non_field_errors %}
+        <div>⚠ {{ error }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Title -->
+    <div class="form-group {% if form.title.errors %}has-error{% endif %}">
+      {{ form.title.label_tag }}
+      {{ form.title }}
+      {% for error in form.title.errors %}
+        <div class="field-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Description -->
+    <div class="form-group {% if form.description.errors %}has-error{% endif %}">
+      {{ form.description.label_tag }}
+      {{ form.description }}
+      {% for error in form.description.errors %}
+        <div class="field-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Club -->
+    <div class="form-group {% if form.club.errors %}has-error{% endif %}">
+      {{ form.club.label_tag }}
+      {{ form.club }}
+      {% for error in form.club.errors %}
+        <div class="field-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Date -->
+    <div class="form-group {% if form.date.errors %}has-error{% endif %}">
+      {{ form.date.label_tag }}
+      {{ form.date }}
+      {% for error in form.date.errors %}
+        <div class="field-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Start + End time (side by side) -->
+    <div class="form-row">
+      <div class="form-group {% if form.start_time.errors %}has-error{% endif %}">
+        {{ form.start_time.label_tag }}
+        {{ form.start_time }}
+        {% for error in form.start_time.errors %}
+          <div class="field-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group {% if form.end_time.errors %}has-error{% endif %}">
+        {{ form.end_time.label_tag }}
+        {{ form.end_time }}
+        {% for error in form.end_time.errors %}
+          <div class="field-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- Actions -->
+    <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+      <a href="{% url 'events' %}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        <span>✚</span> Create Event
+      </button>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}

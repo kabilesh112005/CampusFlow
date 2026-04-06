@@ -1,0 +1,93 @@
+{% extends 'accounts/base.html' %}
+{% block nav_my_events %}active{% endblock %}
+
+{% block title %}My Events — CampusFlow{% endblock %}
+{% block page_title %}My Registrations{% endblock %}
+
+{% block content %}
+
+<!-- 🔥 Header -->
+<div class="section-header animate-in">
+  <div>
+    <div class="section-title">My Events 🎉</div>
+    <div class="section-sub">Events you have registered for</div>
+  </div>
+</div>
+
+{% if registrations %}
+
+<div class="events-grid animate-in delay-1">
+
+  {% for reg in registrations %}
+  <div class="event-card">
+
+    <!-- Club -->
+    <div class="event-card-club">
+      {{ reg.event.club.name }}
+    </div>
+
+    <!-- Title -->
+    <div class="event-card-title">
+      {{ reg.event.title }}
+    </div>
+
+    <!-- Description -->
+    <div style="font-size:0.85rem; color:var(--text3); line-height:1.6;">
+      {{ reg.event.description|truncatechars:100 }}
+    </div>
+
+    <!-- Meta -->
+    <div class="event-card-meta">
+      <div class="event-meta-chip">
+        📅 {{ reg.event.date|date:"M j, Y" }}
+      </div>
+      <div class="event-meta-chip">
+        ⏰ {{ reg.event.start_time|time:"g:i A" }}
+      </div>
+    </div>
+
+    <!-- 🎯 Bottom Section -->
+    <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+
+      <!-- Status -->
+{% if reg.is_attended %}
+  <span class="badge badge-green">✅ Attended</span>
+{% else %}
+  <span class="badge badge-blue">⏳ Not Attended</span>
+{% endif %}
+
+      <!-- 🔥 QR Code (Future-ready) -->
+      {% if reg.qr_code %}
+  <div style="display:flex; flex-direction:column; align-items:center;">
+    <img src="{{ reg.qr_code.url }}" width="70" />
+
+    <!-- 🔥 SHOW BUTTON ONLY FOR ADMINS -->
+    {% if not user.is_student %}
+      <a href="{% url 'scan_qr' reg.event.id reg.qr_token %}" 
+         class="btn btn-sm btn-primary" 
+         style="margin-top:6px;">
+         Scan QR
+      </a>
+    {% endif %}
+
+  </div>
+{% endif %}
+
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="empty-state animate-in">
+  <div class="empty-state-icon">📭</div>
+  <h3>No registrations yet</h3>
+  <p>Go explore events and register 🚀</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

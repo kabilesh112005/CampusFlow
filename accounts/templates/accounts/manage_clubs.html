@@ -1,0 +1,74 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Manage Clubs — CampusFlow{% endblock %}
+{% block page_title %}Club Approvals{% endblock %}
+{% block nav_dashboard %}{% endblock %}
+
+{% block content %}
+
+<!-- 🔥 Header -->
+<div class="section-header animate-in">
+  <div>
+    <div class="section-title">Pending Club Approvals</div>
+    <div class="section-sub">
+      Review and approve clubs in your college
+    </div>
+  </div>
+</div>
+
+
+{% if clubs %}
+
+<div class="events-grid animate-in delay-1">
+
+  {% for club in clubs %}
+  <div class="event-card">
+
+    <!-- Club Name -->
+    <div class="event-card-title">
+      {{ club.name }}
+    </div>
+
+    <!-- Description -->
+    <div style="font-size:0.85rem; color:var(--text3); line-height:1.6;">
+      {{ club.description|truncatechars:120 }}
+    </div>
+
+    <!-- Meta -->
+    <div class="event-card-meta">
+      <div class="event-meta-chip">🏫 {{ club.college.name }}</div>
+      <div class="event-meta-chip">👤 {{ club.admin.username|default:"No Admin" }}</div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+
+      <!-- Approve -->
+      <a href="{% url 'approve_club' club.id %}" class="btn btn-primary btn-sm">
+        Approve
+      </a>
+
+      <!-- Reject (optional future) -->
+      <button class="btn btn-ghost btn-sm" disabled>
+        Reject
+      </button>
+
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+
+{% else %}
+
+<!-- 🔥 Empty State -->
+<div class="empty-state animate-in">
+  <div class="empty-state-icon">🎉</div>
+  <h3>No pending approvals</h3>
+  <p>All clubs are already approved. You're up to date!</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Dashboard — CampusFlow{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+
+<!-- 🔥 Welcome header -->
+<div class="animate-in" style="margin-bottom:2rem;">
+  <h1 style="font-family:var(--font-d); font-size:2rem; margin-bottom:0.3rem;">
+    Welcome back, {{ user.first_name|default:user.username }} 👋
+  </h1>
+  <p style="color:var(--text3); font-size:0.9rem;">
+    Manage your campus ecosystem efficiently
+    <span class="badge badge-{{ user.role }}" style="margin-left:0.5rem;">
+      {{ role_display }}
+    </span>
+  </p>
+</div>
+
+<!-- 🔥 Stats -->
+<div class="stat-grid animate-in delay-1">
+
+  <!-- Always visible -->
+  <div class="stat-card" style="background:linear-gradient(145deg, var(--surface), var(--bg2)); position:relative; overflow:hidden;">
+    <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:var(--accent-glow); filter:blur(40px);"></div>
+    <span class="stat-icon">📅</span>
+    <span class="stat-value">{{ total_events }}</span>
+    <span class="stat-label">Total Events</span>
+  </div>
+
+  <!-- Admin only -->
+  {% if not user.is_student %}
+
+  {% if total_bookings is not None %}
+  <div class="stat-card" style="background:linear-gradient(145deg, var(--surface), var(--bg2)); position:relative; overflow:hidden;">
+    <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:var(--accent-glow); filter:blur(40px);"></div>
+    <span class="stat-icon">🏛</span>
+    <span class="stat-value">{{ total_bookings }}</span>
+    <span class="stat-label">Venue Bookings</span>
+  </div>
+  {% endif %}
+
+  <div class="stat-card" style="background:linear-gradient(145deg, var(--surface), var(--bg2)); position:relative; overflow:hidden;">
+    <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:var(--accent-glow); filter:blur(40px);"></div>
+    <span class="stat-icon">📍</span>
+    <span class="stat-value">{{ total_venues }}</span>
+    <span class="stat-label">Available Venues</span>
+  </div>
+
+  {% endif %}
+
+  <!-- Visible to all -->
+  <div class="stat-card" style="background:linear-gradient(145deg, var(--surface), var(--bg2)); position:relative; overflow:hidden;">
+    <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:var(--accent-glow); filter:blur(40px);"></div>
+    <span class="stat-icon">🎭</span>
+    <span class="stat-value">{{ total_clubs }}</span>
+    <span class="stat-label">Active Clubs</span>
+  </div>
+
+</div>
+
+<!-- 🔥 Chart + Quick Info -->
+{% if not user.is_student %}
+<div class="dashboard-grid-2 animate-in delay-2">
+
+  <!-- LEFT: Chart -->
+  <div class="card" style="height:320px; width:100%; background:linear-gradient(145deg, var(--surface), var(--bg2));">
+    <h3 style="margin-bottom:1rem;">Attendance Analytics 📊</h3>
+    <canvas id="attendanceChart" style="height:250px;"></canvas>
+  </div>
+
+  <!-- RIGHT: Quick Info -->
+  <div class="card" style="height:320px;">
+    <h3 style="margin-bottom:1rem;">Quick Info</h3>
+    <p style="color:var(--text3); font-size:0.85rem;">
+      Your activity and engagement will appear here soon.
+    </p>
+  </div>
+
+</div>
+{% endif %}
+
+<!-- 🔥 Quick Actions -->
+<div class="section-header animate-in delay-2" style="margin-top:2.5rem;">
+  <div>
+    <div class="section-title">Quick Actions</div>
+    <div class="section-sub">Everything you need in one place</div>
+  </div>
+</div>
+
+<div class="action-grid animate-in delay-2">
+
+  <a href="{% url 'events' %}" class="action-card">
+    <div class="action-card-icon">📅</div>
+    <div>
+      <div class="action-card-title">Explore Events</div>
+      <div class="action-card-desc">Discover what's happening in your college</div>
+    </div>
+  </a>
+
+  {% if not user.is_student %}
+  <a href="{% url 'create_event' %}" class="action-card">
+    <div class="action-card-icon">🚀</div>
+    <div>
+      <div class="action-card-title">Create Event</div>
+      <div class="action-card-desc">Launch a new event for your club</div>
+    </div>
+  </a>
+
+  <a href="{% url 'book_venue' %}" class="action-card">
+    <div class="action-card-icon">🏛</div>
+    <div>
+      <div class="action-card-title">Book Venue</div>
+      <div class="action-card-desc">Reserve space for your event</div>
+    </div>
+  </a>
+  {% endif %}
+
+  {% if user.is_college_admin %}
+  <a href="{% url 'manage_clubs' %}" class="action-card">
+    <div class="action-card-icon">✅</div>
+    <div>
+      <div class="action-card-title">Approve Clubs</div>
+      <div class="action-card-desc">Review and approve pending clubs</div>
+    </div>
+  </a>
+
+  <a href="/admin/" class="action-card">
+    <div class="action-card-icon">⚙</div>
+    <div>
+      <div class="action-card-title">Admin Panel</div>
+      <div class="action-card-desc">Full system control</div>
+    </div>
+  </a>
+  {% endif %}
+
+</div>
+
+<!-- 🔥 Upcoming Events -->
+{% if upcoming_events %}
+<div class="section-header animate-in delay-3">
+  <div>
+    <div class="section-title">Upcoming Events</div>
+    <div class="section-sub">Stay updated with what’s next</div>
+  </div>
+  <a href="{% url 'events' %}" class="btn btn-ghost btn-sm">View all →</a>
+</div>
+
+<div class="events-grid animate-in delay-3">
+
+  {% for event in upcoming_events %}
+  <div class="event-card scale-in">
+
+    {% if event.poster %}
+    <img src="{{ event.poster.url }}" style="
+      width:100%;
+      height:150px;
+      object-fit:cover;
+      border-radius:10px;
+      margin-bottom:10px;
+    ">
+    {% endif %}
+
+    <!-- 🔥 STATUS BADGE -->
+{% if not event.is_approved %}
+  <div class="badge badge-blue" style="margin-bottom:6px;">⏳ Pending</div>
+{% elif not event.is_active %}
+  <div class="badge badge-red" style="margin-bottom:6px;">❌ Cancelled</div>
+{% else %}
+  <div class="badge badge-green" style="margin-bottom:6px;">✅ Approved</div>
+{% endif %}
+
+    <div class="event-card-club">{{ event.club.name }}</div>
+    <div class="event-card-title">{{ event.title }}</div>
+
+    <div class="event-card-meta">
+      <div class="event-meta-chip">📅 {{ event.date|date:"M j" }}</div>
+      <div class="event-meta-chip">⏰ {{ event.start_time|time:"g:i A" }}</div>
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+{% endif %}
+
+<!-- 🔥 Role Info -->
+<div class="card animate-in delay-4" style="margin-top:1.5rem; background:var(--bg2);">
+  <div style="display:flex; gap:1rem; align-items:flex-start;">
+    <div style="font-size:1.6rem;">
+      {% if user.is_student %}🎒{% elif user.is_club_admin %}🏛{% else %}🎓{% endif %}
+    </div>
+    <div>
+      <div style="font-weight:600; margin-bottom:0.4rem;">{{ role_display }} Access</div>
+      <div style="font-size:0.85rem; color:var(--text3); line-height:1.7;">
+        {% if user.is_student %}
+          Explore events happening in your college and stay connected with clubs.
+        {% elif user.is_club_admin %}
+          Create, manage events and book venues for your club activities.
+        {% elif user.is_college_admin %}
+          Full control over clubs, approvals, events, and venues in your college.
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
