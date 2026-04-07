@@ -55,7 +55,7 @@ class RegisterForm(forms.ModelForm):
         return cleaned_data
 
 
-# ✅ LOGIN FORM
+#  LOGIN FORM
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
         widget=forms.TextInput(attrs={'placeholder': 'Username'}),
@@ -105,7 +105,7 @@ class EventForm(forms.ModelForm):
         # 🔥 CLUB LOGIC FIX
         if self.user:
 
-            # ✅ CLUB ADMIN → only their club
+            
             if self.user.is_club_admin:
                 self.fields['club'].queryset = Club.objects.filter(
                     admin=self.user,
@@ -114,7 +114,7 @@ class EventForm(forms.ModelForm):
                 )
                 self.fields['club'].required = True
 
-            # ✅ COLLEGE ADMIN → NO club selection
+            
             elif self.user.is_college_admin:
                 self.fields['club'].required = False
                 self.fields['club'].queryset = Club.objects.none()
@@ -122,7 +122,7 @@ class EventForm(forms.ModelForm):
 
         self.fields['club'].empty_label = '— Select a club —'
 
-        # 🔥 VENUE FILTER (same as before)
+        
         if self.user:
             self.fields['venue'].queryset = Venue.objects.filter(
                 college=self.user.college
@@ -138,11 +138,11 @@ class EventForm(forms.ModelForm):
         date  = cleaned.get('date')
         venue = cleaned.get('venue')
 
-        # 🔥 TIME VALIDATION
+        
         if start and end and end <= start:
             raise forms.ValidationError("End time must be after start time.")
 
-        # 🔥 CONFLICT CHECK
+        
         if venue and date and start and end:
             conflict = Event.objects.filter(
                 venue=venue,

@@ -135,7 +135,7 @@
           </a>
 
         <!-- 🔥 COLLEGE ADMIN -->
-        {% elif user.is_college_admin and not event.club.admin %}
+        {% elif user.is_college_admin %}
 
           <!-- 🔥 PENDING -->
           {% if not event.is_approved and event.is_active %}

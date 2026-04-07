@@ -303,6 +303,8 @@ def create_event_view(request):
                 event.is_approved = False
             elif request.user.is_college_admin:
                 event.is_approved = True
+            
+            event.is_active = True
 
             event.save()
 
@@ -741,7 +743,8 @@ def update_event_status(request, event_id, action):
     if not request.user.is_college_admin:
         return redirect('dashboard')
 
-    if event.club.college != request.user.college:
+    # ✅ FIXED SAFETY CHECK
+    if event.club and event.club.college != request.user.college:
         return redirect('dashboard')
 
     # 🔥 ACTION LOGIC

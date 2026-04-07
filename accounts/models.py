@@ -7,7 +7,6 @@ from io import BytesIO
 from django.core.files import File
 
 
-# 🔥 COLLEGE MODEL
 class College(models.Model):
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=50, unique=True)
@@ -22,7 +21,7 @@ class College(models.Model):
         return self.name
 
 
-# 🔥 USER MODEL
+
 class User(AbstractUser):
 
     STUDENT = 'student'
@@ -64,7 +63,7 @@ class User(AbstractUser):
         return self.role == self.COLLEGE_ADMIN
 
 
-# 🔥 CLUB MODEL
+
 class Club(models.Model):
 
     PENDING = 'pending'
@@ -114,7 +113,7 @@ class Club(models.Model):
         return f"{self.name} ({self.college.name})"
 
 
-# 🔥 VENUE MODEL (ONLY ONE — FIXED)
+
 class Venue(models.Model):
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
@@ -130,7 +129,7 @@ class Venue(models.Model):
         return f"{self.name} ({self.college.name})"
 
 
-# 🔥 VENUE SLOT MODEL (NEW SYSTEM)
+
 class VenueSlot(models.Model):
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE)
     date = models.DateField()
@@ -155,8 +154,7 @@ class VenueSlot(models.Model):
         return f"{self.venue.name} - {self.date} ({self.start_time} - {self.end_time})"
 
 
-# 🔥 EVENT MODEL (UPDATED WITH SLOT)
-# 🔥 EVENT MODEL (UPDATED — SMART VENUE SYSTEM)
+
 class Event(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -167,7 +165,7 @@ class Event(models.Model):
         related_name='events'
     )
 
-    # 🔥 KEEP SLOT (but optional, not used actively)
+    
     slot = models.ForeignKey(
         VenueSlot,
         on_delete=models.CASCADE,
@@ -176,7 +174,7 @@ class Event(models.Model):
         related_name='events'
     )
 
-    # 🔥 MAIN FIELD NOW
+    
     venue = models.ForeignKey(
         Venue,
         on_delete=models.CASCADE,
@@ -185,7 +183,7 @@ class Event(models.Model):
         related_name='events'
     )
 
-    # 🔥 PRIMARY TIME SYSTEM
+    
     date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
@@ -228,7 +226,7 @@ class Event(models.Model):
     def __str__(self):
         return self.title
 
-# 🔥 EVENT REGISTRATION
+
 class EventRegistration(models.Model):
 
     PENDING = 'pending'
@@ -271,7 +269,7 @@ class EventRegistration(models.Model):
 
     registered_at = models.DateTimeField(auto_now_add=True)
 
-    # 🔥 QR SYSTEM
+    
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
     qr_token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
@@ -281,7 +279,7 @@ class EventRegistration(models.Model):
     def save(self, *args, **kwargs):
         # Generate QR code if not exists
         if not self.qr_code:
-            qr_data = f"{self.event.id}-{self.student.id}-{self.qr_token}"
+            qr_data = str(self.qr_token)
             qr_img = qrcode.make(qr_data)
 
             buffer = BytesIO()
