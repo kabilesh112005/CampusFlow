@@ -32,32 +32,15 @@
   {% for event in events %}
   <div class="event-card">
 
-    <!-- 🔥 POSTER -->
     {% if event.poster %}
-    <img src="{{ event.poster.url }}" style="
-      width:100%;
-      height:180px;
-      object-fit:cover;
-      border-radius:12px;
-      margin-bottom:12px;
-    ">
+    <img src="{{ event.poster.url }}" style="width:100%; height:180px; object-fit:cover; border-radius:12px; margin-bottom:12px;">
     {% else %}
-    <div style="
-      width:100%;
-      height:180px;
-      background:var(--surface2);
-      border-radius:12px;
-      margin-bottom:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:var(--text3);
-    ">
+    <div style="width:100%; height:180px; background:var(--surface2); border-radius:12px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; color:var(--text3);">
       No Image
     </div>
     {% endif %}
 
-    <!-- 🔥 STATUS -->
+    <!-- STATUS -->
     {% if not event.is_active and not event.is_approved %}
       <div class="badge badge-red">❌ Rejected</div>
     {% elif not event.is_active %}
@@ -68,7 +51,7 @@
       <div class="badge badge-green">✅ Approved</div>
     {% endif %}
 
-    <!-- 🔥 Attendance -->
+    <!-- Attendance -->
     <div class="badge badge-green">
       {{ event.attended_count }} / {{ event.total_registered }} Attended
     </div>
@@ -78,7 +61,9 @@
     </div>
 
     <div class="event-card-title">
-      {{ event.title }}
+      <a href="{% url 'event_detail' event.id %}" style="text-decoration:none; color:inherit;">
+        {{ event.title }}
+      </a>
     </div>
 
     <div style="font-size:0.85rem; color:var(--text3);">
@@ -92,8 +77,10 @@
       <div class="event-meta-chip">
         ⏰ {{ event.start_time|time:"g:i A" }}
       </div>
+      <div class="event-meta-chip">
+        🎟 Seats Left: {{ event.seats_left }}
+      </div>
 
-      <!-- 🔥 SHOW VENUE ONLY AFTER REGISTRATION -->
       {% if event.is_registered %}
       <div class="event-meta-chip">
         📍 {{ event.venue.name }}
@@ -101,7 +88,7 @@
       {% endif %}
     </div>
 
-    <!-- 🔥 ACTIONS -->
+    <!-- ACTIONS -->
     <div style="margin-top:1rem; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between;">
 
       <span class="badge badge-amber">
@@ -111,66 +98,59 @@
       {% if user.is_student %}
 
         {% if event.is_registered %}
-          <button class="btn btn-success btn-sm" disabled>
-            Registered ✅
-          </button>
+          <button class="btn btn-success btn-sm" disabled>Registered ✅</button>
+
+        {% elif not event.is_registration_open %}
+          <button class="btn btn-danger btn-sm" disabled>Closed ❌</button>
 
         {% elif event.is_full %}
-          <button class="btn btn-danger btn-sm" disabled>
-            Event Full ❌
-          </button>
+          <button class="btn btn-danger btn-sm" disabled>Event Full ❌</button>
 
         {% else %}
-          <a href="{% url 'register_event' event.id %}" class="btn btn-primary btn-sm">
-            Register 🎯
-          </a>
+          <form method="POST" action="{% url 'register_event' event.id %}">
+    {% csrf_token %}
+
+    <input type="text" name="department" placeholder="Department" required>
+    <input type="text" name="year" placeholder="Year" required>
+    <input type="text" name="phone" placeholder="Phone Number" required>
+
+    <button type="submit">Register</button>
+</form>
         {% endif %}
 
       {% else %}
 
-        <!-- 🔥 CLUB ADMIN (ONLY THEIR EVENT) -->
-        {% if user.is_club_admin and event.club.admin == user %}
-          <a href="{% url 'qr_scanner' event.id %}" class="btn btn-primary btn-sm">
-            📷 Scan QR
-          </a>
+        <!-- ❌ REMOVED SCAN QR FROM HERE -->
 
-        <!-- 🔥 COLLEGE ADMIN -->
-        {% elif user.is_college_admin %}
+        {% if user.is_college_admin %}
 
-          <!-- 🔥 PENDING -->
           {% if not event.is_approved and event.is_active %}
             <div style="display:flex; gap:6px;">
-              <a href="{% url 'update_event_status' event.id 'approve' %}" 
-                 class="btn btn-success btn-sm"
-                 onclick="return confirm('Approve this event?')">
+              <a href="{% url 'update_event_status' event.id 'approve' %}" class="btn btn-success btn-sm">
                 Approve
               </a>
 
-              <a href="{% url 'update_event_status' event.id 'reject' %}" 
-                 class="btn btn-danger btn-sm"
-                 onclick="return confirm('Reject this event?')">
+              <a href="{% url 'update_event_status' event.id 'reject' %}" class="btn btn-danger btn-sm">
                 Reject
               </a>
             </div>
 
-          <!-- 🔥 APPROVED -->
           {% elif event.is_approved and event.is_active %}
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-
-              <a href="{% url 'qr_scanner' event.id %}" 
-                 class="btn btn-primary btn-sm">
-                📷 Scan QR
+              
+              <a href="{% url 'edit_event' event.id %}" class="btn btn-primary btn-sm">
+                ✏️ Edit
               </a>
 
-              <a href="{% url 'update_event_status' event.id 'cancel' %}" 
-                 class="btn btn-ghost btn-sm"
-                 onclick="return confirm('Cancel this event?')">
+              <a href="{% url 'update_event_status' event.id 'cancel' %}" class="btn btn-ghost btn-sm">
                 Cancel 🚫
               </a>
 
+              {% if not event.is_registration_open %}
+                <div class="badge badge-red">Registration Closed</div>
+              {% endif %}
             </div>
 
-          <!-- 🔥 REJECTED / CANCELLED -->
           {% else %}
             <span style="font-size:0.8rem; color:var(--text3);">
               No actions

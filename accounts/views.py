@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import EventRegistration
+from django.contrib.auth.decorators import user_passes_test
 
 
 from .forms import RegisterForm, LoginForm, EventForm
@@ -14,6 +15,10 @@ from .models import Event, Venue, Club , VenueSlot
 import pandas as pd
 from django.http import HttpResponse
 import json
+from .models import User
+
+def club_admin_required(user):
+    return user.is_club_admin
 
 
 # ═══════════════════════════════════════════════════════
@@ -79,6 +84,10 @@ def register_event_view(request, event_id):
 
     user = request.user
 
+    if not event.is_registration_open:
+        messages.error(request, "Registration closed ❌")
+        return redirect('events')
+
     # 1. Only students
     if not user.is_student:
         messages.error(request, "Only students can register for events.")
@@ -100,9 +109,9 @@ def register_event_view(request, event_id):
         student=user
     ).exists():
         messages.info(request, "You have already registered for this event.")
-        return redirect('events')
+        return redirect('event_detail', event_id=event.id)
 
-    # 5 & 6. Capacity check (only approved registrations counted)
+    # 5 & 6. Capacity check
     current_count = EventRegistration.objects.filter(
         event=event,
         status='approved'
@@ -112,16 +121,35 @@ def register_event_view(request, event_id):
         messages.error(request, "Registration closed. Event is full.")
         return redirect('events')
 
-    # 7. Auto approval
-    EventRegistration.objects.create(
-        event=event,
-        student=user,
-        status='approved',
-        reviewed_by=None
-    )
+    # 🔥 ONLY CREATE REGISTRATION ON POST
+    if request.method == 'POST':
 
-    messages.success(request, "Successfully registered! You're in 🎉")
-    return redirect('events')
+        department = request.POST.get('department')
+        year = request.POST.get('year')
+        phone = request.POST.get('phone')
+
+        # 🔒 VALIDATION
+        if not department or not year or not phone:
+            messages.error(request, "All fields are required.")
+            return redirect('event_detail', event_id=event.id)
+
+        EventRegistration.objects.create(
+            event=event,
+            student=user,
+            status='approved',
+            reviewed_by=None,
+
+            email=user.email,
+            department=department,
+            year=year,
+            phone=phone,
+        )
+
+        messages.success(request, "Successfully registered! You're in 🎉")
+        return redirect('events')
+
+    # 🔥 IF GET REQUEST → SHOW EVENT PAGE
+    return redirect('event_detail', event_id=event.id)
 
 
 # ═══════════════════════════════════════════════════════
@@ -132,6 +160,8 @@ def register_event_view(request, event_id):
 def dashboard_view(request):
 
     user = request.user
+    if user.is_superuser:
+        return redirect('admin_dashboard')
     college = user.college
 
     if user.is_college_admin:
@@ -191,6 +221,11 @@ def dashboard_view(request):
 
         event_labels.append(event.title)
         event_attendance.append(attended)
+        event.total_registered = EventRegistration.objects.filter(
+             event=event
+        ).count()
+
+    event.seats_left = event.capacity - event.total_registered
 
     context = {
         'user': user,
@@ -248,10 +283,12 @@ def events_view(request):
             student=request.user
         ).exists()
 
-        event.is_full = EventRegistration.objects.filter(
+        approved_count = EventRegistration.objects.filter(
             event=event,
             status='approved'
-        ).count() >= event.capacity
+        ).count()
+
+        event.is_full = approved_count >= event.capacity
 
         event.attended_count = EventRegistration.objects.filter(
             event=event,
@@ -261,6 +298,15 @@ def events_view(request):
         event.total_registered = EventRegistration.objects.filter(
             event=event
         ).count()
+
+        # 🔥 NEW: SEATS LEFT
+        event.seats_left = event.capacity - event.total_registered
+
+        # 🔥 NEW: AUTO CLOSE REGISTRATION
+        if event.seats_left <= 0:
+            event.is_registration_open = False
+        else:
+            event.is_registration_open = True
 
     context = {
         'events': events,
@@ -395,39 +441,6 @@ def create_slot_view(request):
 
 
 # ═══════════════════════════════════════════════════════
-# BOOK VENUE
-# ═══════════════════════════════════════════════════════
-
-@login_required(login_url='login')
-def book_venue_view(request):
-
-    if request.user.is_student:
-        messages.error(request, "Students cannot access venue slots.")
-        return redirect('events')
-
-    # 🔥 SLOT SYSTEM
-    if request.user.is_college_admin:
-        slots = VenueSlot.objects.filter(
-            venue__college=request.user.college
-        ).order_by('-date')
-
-    elif request.user.is_club_admin:
-        slots = VenueSlot.objects.filter(
-            venue__college=request.user.college,
-            is_available=True
-        ).order_by('date')
-
-    else:
-        slots = []
-
-    context = {
-        'slots': slots,
-    }
-
-    return render(request, 'accounts/book.html', context)
-
-
-# ═══════════════════════════════════════════════════════
 # CLUB APPROVAL SYSTEM
 # ═══════════════════════════════════════════════════════
 
@@ -537,7 +550,11 @@ def scan_qr_view(request, event_id, token):
         })
 
     # ✅ GET EVENT
-    event = get_object_or_404(Event, id=event_id)
+    event = get_object_or_404(
+    Event,
+    id=event_id,
+    club__college=request.user.college
+)
 
     # 🔒 STRICT ROLE-BASED ACCESS
 
@@ -578,13 +595,14 @@ def scan_qr_view(request, event_id, token):
 @login_required
 def qr_scanner_view(request, event_id):
 
-    if request.user.is_student:
+    if not request.user.is_club_admin:
         return redirect('dashboard')
 
     event = get_object_or_404(Event, id=event_id)
 
     # 🔒 CLUB ADMIN → ONLY their events
     if request.user.is_club_admin:
+        event = get_object_or_404(Event, id=event_id)
         if event.club.admin != request.user:
             return redirect('dashboard')
 
@@ -657,11 +675,15 @@ def export_attendance(request):
 
     for r in registrations:
         data.append({
-            'Student': r.student.username,
-            'Event': r.event.title,
-            'Attended': 'Yes' if r.is_attended else 'No'
-        })
-
+    'Name': r.student.username,
+    'Email': r.email,
+    'Department': r.department,
+    'Year': r.year,
+    'Phone': r.phone,
+    'Event': r.event.title,
+    'Status': r.status,
+    'Attended': 'Yes' if r.is_attended else 'No'
+})
     df = pd.DataFrame(data)
 
     response = HttpResponse(content_type='application/vnd.ms-excel')
@@ -765,3 +787,252 @@ def update_event_status(request, event_id, action):
     event.save()
 
     return redirect('events')
+
+@login_required
+def admin_dashboard_view(request):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    from .models import User, College, Event
+
+    context = {
+        'total_users': User.objects.count(),
+        'total_colleges': College.objects.count(),
+        'total_events': Event.objects.count(),
+    }
+
+    return render(request, 'accounts/admin_dashboard.html', context)
+
+@login_required
+def manage_users_view(request):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    users = User.objects.select_related('college').all()
+
+    # 🔍 SEARCH
+    query = request.GET.get('q')
+
+    if query == "None" or query == "":
+       query = None
+    from django.db.models import Q
+
+    if query:
+     users = users.filter(
+        Q(username__icontains=query) |
+        Q(email__icontains=query)
+    )
+
+    # 🎯 FILTER ROLE
+    role = request.GET.get('role')
+    if role:
+        users = users.filter(role=role)
+
+    # 🏫 FILTER COLLEGE
+    college = request.GET.get('college')
+    if college:
+        users = users.filter(college_id=college)
+
+    from .models import College
+    colleges = College.objects.all()
+
+    return render(request, 'accounts/manage_users.html', {
+        'users': users,
+        'colleges': colleges,
+        'query': query,
+        'selected_role': role,
+        'selected_college': college
+    })
+
+@login_required
+def update_user_role_view(request, user_id):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+
+    new_role = request.POST.get('role')
+
+    if new_role in ['student', 'club_admin', 'college_admin']:
+        user.role = new_role
+        user.save()
+        messages.success(request, "Role updated successfully!")
+
+    return redirect('manage_users')
+
+@login_required
+def manage_colleges_view(request):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    from .models import College
+
+    colleges = College.objects.all()
+
+    return render(request, 'accounts/manage_colleges.html', {
+        'colleges': colleges
+    })
+
+
+@login_required
+def create_college_view(request):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    from .models import College
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        code = request.POST.get('code')
+        location = request.POST.get('location')
+        email_domain = request.POST.get('email_domain')
+
+        College.objects.create(
+            name=name,
+            code=code,
+            location=location,
+            email_domain=email_domain
+        )
+
+        messages.success(request, "College created successfully ✅")
+        return redirect('manage_colleges')
+
+    return render(request, 'accounts/create_college.html')
+
+@login_required
+def assign_college_admin_view(request, user_id):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+
+    from .models import College
+    colleges = College.objects.all()
+
+    if request.method == 'POST':
+        college_id = request.POST.get('college')
+
+        if college_id:
+            college = College.objects.get(id=college_id)
+
+            user.role = 'college_admin'
+            user.college = college
+            user.save()
+
+            messages.success(request, "User promoted to College Admin ✅")
+            return redirect('manage_users')
+
+    return render(request, 'accounts/assign_college_admin.html', {
+        'user_obj': user,
+        'colleges': colleges
+    })
+
+@login_required
+def delete_user_view(request, user_id):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+
+    # ❌ Prevent deleting self
+    if user == request.user:
+        messages.error(request, "You cannot delete yourself ❌")
+        return redirect('manage_users')
+
+    user.delete()
+    messages.success(request, "User deleted successfully 🗑️")
+
+    return redirect('manage_users')
+
+@login_required
+def edit_event_view(request, event_id):
+
+    if not request.user.is_college_admin:
+        return redirect('dashboard')
+
+    event = get_object_or_404(
+        Event,
+        id=event_id,
+        club__college=request.user.college
+    )
+
+    from .models import Venue
+    venues = Venue.objects.filter(college=request.user.college)
+
+    # 🔥 STEP 3: BLOCK EDIT IF EVENT IS IN PAST
+    from django.utils.timezone import now
+    from datetime import datetime
+
+    if event.date and event.end_time:
+        event_datetime = datetime.combine(event.date, event.end_time)
+
+        # ⚠️ compare safely
+        if event_datetime < now().replace(tzinfo=None):
+            messages.error(request, "Cannot edit past events ❌")
+            return redirect('events')
+
+    if request.method == 'POST':
+        event.capacity = request.POST.get('capacity')
+        event.venue_id = request.POST.get('venue')
+        event.date = request.POST.get('date')
+        event.start_time = request.POST.get('start_time')
+        event.end_time = request.POST.get('end_time')
+
+        try:
+            event.full_clean()  # 🔥 triggers conflict validation
+            event.save()
+            messages.success(request, "Event updated successfully ✅")
+            return redirect('events')
+        except Exception as e:
+            messages.error(request, str(e))
+
+    return render(request, 'accounts/edit_event.html', {
+        'event': event,
+        'venues': venues
+    })
+
+@login_required
+def event_detail_view(request, event_id):
+
+    event = get_object_or_404(
+        Event.objects.select_related('club', 'venue'),
+        id=event_id,
+        club__college=request.user.college
+    )
+
+    # 🔥 SAME LOGIC FOR ALL USERS
+    event.total_registered = EventRegistration.objects.filter(event=event).count()
+
+    approved_count = EventRegistration.objects.filter(
+        event=event,
+        status='approved'
+    ).count()
+
+    event.is_full = approved_count >= event.capacity
+    event.seats_left = event.capacity - event.total_registered
+
+    event.is_registered = EventRegistration.objects.filter(
+        event=event,
+        student=request.user
+    ).exists()
+
+    event.attended_count = EventRegistration.objects.filter(
+        event=event,
+        is_attended=True
+    ).count()
+
+    if event.seats_left <= 0:
+        event.is_registration_open = False
+    else:
+        event.is_registration_open = True
+
+    return render(request, 'accounts/event_detail.html', {
+        'event': event
+    })

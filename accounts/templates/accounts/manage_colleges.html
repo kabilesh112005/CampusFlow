@@ -1,0 +1,38 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Manage Colleges{% endblock %}
+{% block page_title %}Manage Colleges{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">🏫 Colleges</div>
+    <div class="section-sub">All registered colleges</div>
+  </div>
+
+  <a href="{% url 'create_college' %}" class="btn btn-primary">
+    + Add College
+  </a>
+</div>
+
+<div class="events-grid">
+
+  {% for college in colleges %}
+  <div class="event-card">
+    <div class="event-card-title">{{ college.name }}</div>
+
+    <div style="font-size:0.9rem; color:var(--text3);">
+      📍 {{ college.location }}
+    </div>
+
+    <div style="margin-top:8px;">
+      📧 {{ college.email_domain }}
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Admin Panel{% endblock %}
+{% block page_title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">👑 Admin Overview</div>
+    <div class="section-sub">Control and monitor the entire system</div>
+  </div>
+</div>
+
+<!-- 🔥 STATS CARDS -->
+<div class="events-grid">
+
+  <div class="event-card">
+    <div class="event-card-title">👥 Total Users</div>
+    <div style="font-size:1.5rem; font-weight:600;">
+      {{ total_users }}
+    </div>
+  </div>
+
+  <div class="event-card">
+    <div class="event-card-title">🏫 Colleges</div>
+    <div style="font-size:1.5rem; font-weight:600;">
+      {{ total_colleges }}
+    </div>
+  </div>
+
+  <div class="event-card">
+    <div class="event-card-title">📅 Events</div>
+    <div style="font-size:1.5rem; font-weight:600;">
+      {{ total_events }}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

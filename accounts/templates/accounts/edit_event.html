@@ -1,0 +1,40 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Edit Event{% endblock %}
+{% block page_title %}Edit Event{% endblock %}
+
+{% block content %}
+
+<form method="POST" class="card" style="max-width:600px;">
+  {% csrf_token %}
+
+  <h3>Edit Event</h3>
+
+  <label>Capacity</label>
+  <input type="number" name="capacity" value="{{ event.capacity }}" required>
+
+  <label>Venue</label>
+  <select name="venue" required>
+    {% for v in venues %}
+      <option value="{{ v.id }}" {% if event.venue.id == v.id %}selected{% endif %}>
+        {{ v.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>Date</label>
+  <input type="date" name="date" value="{{ event.date }}">
+
+  <label>Start Time</label>
+  <input type="time" name="start_time" value="{{ event.start_time }}">
+
+  <label>End Time</label>
+  <input type="time" name="end_time" value="{{ event.end_time }}">
+
+  <button type="submit" class="btn btn-success">
+    Update Event
+  </button>
+
+</form>
+
+{% endblock %}

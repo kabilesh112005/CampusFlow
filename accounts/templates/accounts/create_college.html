@@ -1,0 +1,24 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Create College{% endblock %}
+{% block page_title %}Add College{% endblock %}
+
+{% block content %}
+
+<form method="POST" class="card" style="max-width:500px;">
+  {% csrf_token %}
+
+  <h3>Add New College</h3>
+
+  <input type="text" name="name" placeholder="College Name" required>
+  <input type="text" name="code" placeholder="College Code" required>
+  <input type="text" name="location" placeholder="Location" required>
+  <input type="text" name="email_domain" placeholder="@college.edu" required>
+
+  <button type="submit" class="btn btn-primary">
+    Create College
+  </button>
+
+</form>
+
+{% endblock %}

@@ -635,77 +635,103 @@ overflow: hidden;
   display:none;
 "></div>
 
-{% block sidebar %}
-{# Only rendered when user is logged in — overridden to empty in auth pages #}
+{{% block sidebar %}
 {% if user.is_authenticated %}
 <aside class="sidebar">
+
   <a href="{% url 'dashboard' %}" class="sidebar-logo">
     <span class="sidebar-logo-icon">🎓</span>
     <span class="sidebar-logo-text">CampusFlow</span>
   </a>
 
-  <span class="nav-section-label">Main</span>
-  <a href="{% url 'dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">
-    <span class="nav-icon">⊞</span> Dashboard
-  </a>
-  <a href="{% url 'events' %}" class="nav-link {% block nav_events %}{% endblock %}">
-    <span class="nav-icon">📅</span> Events
-  </a>
+  <!-- 👑 SUPER ADMIN SIDEBAR -->
+  {% if user.is_superuser %}
 
-  <a href="{% url 'my_events' %}" class="nav-link {% block nav_my_events %}{% endblock %}">
-   <span class="nav-icon">🎟</span> My Events
-  </a>
+    <span class="nav-section-label">Admin</span>
 
-  {% if not user.is_student %}
-  <span class="nav-section-label">Manage</span>
+    <a href="{% url 'admin_dashboard' %}" class="nav-link">
+      <span class="nav-icon">👑</span> Admin Dashboard
+    </a>
 
-  <a href="{% url 'create_event' %}" class="nav-link {% block nav_create %}{% endblock %}">
-    <span class="nav-icon">✚</span> Create Event
-  </a>
+    <a href="{% url 'manage_users' %}" class="nav-link">
+      <span class="nav-icon">👥</span> Manage Users
+    </a>
 
-  <a href="{% url 'manage_registrations' %}" class="nav-link">
-    <span class="nav-icon">👥</span> Registrations
-  </a>
+    <a href="{% url 'manage_colleges' %}" class="nav-link">
+  <span class="nav-icon">🏫</span> Manage Colleges
+</a>
 
-  <a href="{% url 'attendance' %}" class="nav-link">
-    <span class="nav-icon">📋</span> Attendance
-  </a>
+  <!-- 👨‍🎓 NORMAL USERS SIDEBAR -->
+  {% else %}
 
-  <!-- 🔥 ONLY COLLEGE ADMIN -->
-  {% if user.is_college_admin %}
+    <span class="nav-section-label">Main</span>
 
-  <a href="{% url 'create_venue' %}" class="nav-link">
-    <span class="nav-icon">🏛</span> Manage Venues
-  </a>
+    <a href="{% url 'dashboard' %}" class="nav-link">
+      <span class="nav-icon">⊞</span> Dashboard
+    </a>
 
-  <a href="{% url 'create_slot' %}" class="nav-link">
-    <span class="nav-icon">📅</span> Manage Slots
-  </a>
+    <a href="{% url 'events' %}" class="nav-link">
+      <span class="nav-icon">📅</span> Events
+    </a>
+
+    <a href="{% url 'my_events' %}" class="nav-link">
+      <span class="nav-icon">🎟</span> My Events
+    </a>
+
+    {% if not user.is_student %}
+    <span class="nav-section-label">Manage</span>
+
+    <a href="{% url 'create_event' %}" class="nav-link">
+      <span class="nav-icon">✚</span> Create Event
+    </a>
+
+    <a href="{% url 'manage_registrations' %}" class="nav-link">
+      <span class="nav-icon">👥</span> Registrations
+    </a>
+
+    <a href="{% url 'attendance' %}" class="nav-link">
+      <span class="nav-icon">📋</span> Attendance
+    </a>
+
+    {% if user.is_college_admin %}
+    <a href="{% url 'create_venue' %}" class="nav-link">
+      <span class="nav-icon">🏛</span> Manage Venues
+    </a>
+
+    <a href="{% url 'create_slot' %}" class="nav-link">
+      <span class="nav-icon">📅</span> Manage Slots
+    </a>
+    {% endif %}
+
+
+    {% endif %}
 
   {% endif %}
 
-  <!-- 🔥 ONLY CLUB ADMIN -->
-  {% if user.is_club_admin %}
-  <a href="{% url 'book_venue' %}" class="nav-link {% block nav_book %}{% endblock %}">
-    <span class="nav-icon">🏛</span> Book Venue
-  </a>
-  {% endif %}
-
-{% endif %}
-
+  <!-- 🔻 USER INFO (COMMON) -->
   <div class="sidebar-bottom">
     <div class="sidebar-user">
       <div class="sidebar-avatar">{{ user.username|first|upper }}</div>
       <div class="sidebar-user-info">
         <div class="sidebar-username">{{ user.username }}</div>
-        <div class="sidebar-role">{{ user.get_role_display }}</div>
+
+        <div class="sidebar-role">
+          {% if user.is_superuser %}
+            Super Admin 👑
+          {% else %}
+            {{ user.get_role_display }}
+          {% endif %}
+        </div>
+
       </div>
     </div>
+
     <form method="POST" action="{% url 'logout' %}">
       {% csrf_token %}
       <button type="submit" class="sidebar-logout">Sign out</button>
     </form>
   </div>
+
 </aside>
 {% endif %}
 {% endblock %}
@@ -720,8 +746,12 @@ overflow: hidden;
   </button>
     <span class="topbar-title">{% block page_title %}CampusFlow{% endblock %}</span>
     <span class="topbar-badge">
-      {{ user.get_role_display }}
-    </span>
+  {% if user.is_superuser %}
+    Super Admin 👑
+  {% else %}
+    {{ user.get_role_display }}
+  {% endif %}
+</span>
   </header>
 
   <!-- Flash messages -->

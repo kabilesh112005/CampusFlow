@@ -1,0 +1,76 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Event Details{% endblock %}
+{% block page_title %}Event Details{% endblock %}
+
+{% block content %}
+
+<div class="card" style="max-width:800px; margin:auto;">
+
+  {% if event.poster %}
+    <img src="{{ event.poster.url }}" style="width:100%; border-radius:12px;">
+  {% endif %}
+
+  <h2>{{ event.title }}</h2>
+
+  <p>{{ event.description }}</p>
+
+  <div style="margin-top:10px;">
+    📅 {{ event.date }} <br>
+    ⏰ {{ event.start_time }} - {{ event.end_time }} <br>
+    📍 {{ event.venue.name }}
+  </div>
+
+  <hr>
+
+  <div>
+    👥 Registered: {{ event.total_registered }} <br>
+    🎟 Seats Left: {{ event.seats_left }} <br>
+    ✅ Attended: {{ event.attended_count }}
+  </div>
+
+  <hr>
+
+  <!-- 🔥 STUDENT ACTION -->
+  {% if user.is_student %}
+
+    {% if event.is_registered %}
+      <button class="btn btn-success" disabled>Registered ✅</button>
+
+    {% elif not event.is_registration_open %}
+      <button class="btn btn-danger" disabled>Closed ❌</button>
+
+    {% elif event.is_full %}
+      <button class="btn btn-danger" disabled>Full ❌</button>
+
+    {% else %}
+    <form method="POST" action="{% url 'register_event' event.id %}">
+        {% csrf_token %}
+
+    <input type="text" name="department" placeholder="Department" required>
+    <input type="text" name="year" placeholder="Year (e.g. 2nd Year)" required>
+    <input type="text" name="phone" placeholder="Phone Number" required>
+
+    <button type="submit">Register</button>
+</form>
+    {% endif %}
+
+  {% endif %}
+
+  <!-- 🔥 CLUB ADMIN -->
+  {% if user.is_club_admin and event.club.admin == user %}
+    <a href="{% url 'qr_scanner' event.id %}" class="btn btn-primary">
+      📷 Scan QR
+    </a>
+  {% endif %}
+
+  <!-- 🔥 COLLEGE ADMIN -->
+  {% if user.is_college_admin %}
+    <a href="{% url 'edit_event' event.id %}" class="btn btn-primary">
+      ✏️ Edit
+    </a>
+  {% endif %}
+
+</div>
+
+{% endblock %}

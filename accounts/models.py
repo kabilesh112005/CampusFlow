@@ -257,6 +257,11 @@ class EventRegistration(models.Model):
         default=PENDING
     )
 
+    email = models.EmailField(blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    year = models.CharField(max_length=20, blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+
     is_attended = models.BooleanField(default=False)
 
     reviewed_by = models.ForeignKey(

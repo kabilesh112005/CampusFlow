@@ -1,0 +1,83 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+
+<h2>👥 Manage Users</h2>
+
+<form method="GET" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+
+  <input type="text" name="q" placeholder="Search user..." value="{{ query|default:'' }}">
+
+  <select name="role">
+    <option value="">All Roles</option>
+    <option value="student" {% if selected_role == 'student' %}selected{% endif %}>Student</option>
+    <option value="club_admin" {% if selected_role == 'club_admin' %}selected{% endif %}>Club Admin</option>
+    <option value="college_admin" {% if selected_role == 'college_admin' %}selected{% endif %}>College Admin</option>
+  </select>
+
+  <select name="college">
+    <option value="">All Colleges</option>
+    {% for c in colleges %}
+      <option value="{{ c.id }}" {% if selected_college == c.id|stringformat:"s" %}selected{% endif %}>
+        {{ c.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- 🔥 FILTER BUTTON -->
+  <button type="submit" class="btn btn-primary">Filter</button>
+
+  <!-- 🔥 RESET BUTTON (ADD THIS LINE) -->
+  <a href="{% url 'manage_users' %}" class="btn btn-ghost">Reset</a>
+
+</form>
+<table style="width:100%; border-collapse:collapse;">
+  <tr>
+    <th>Username</th>
+    <th>Email</th>
+    <th>Role</th>
+    <th>College</th>
+    <th>Update</th>
+  </tr>
+
+  {% for user in users %}
+  <tr>
+    <td>{{ user.username }}</td>
+    <td>{{ user.email }}</td>
+    <td>{{ user.role }}</td>
+    <td>{{ user.college.name }}</td>
+
+    <td>
+      <form method="POST" action="{% url 'update_user_role' user.id %}">
+    
+        <a href="{% url 'delete_user' user.id %}" 
+   class="btn btn-danger btn-sm"
+   onclick="return confirm('Are you sure you want to delete this user?')">
+   Delete
+</a>
+        <a href="{% url 'assign_college_admin' user.id %}" class="btn btn-sm btn-warning">
+  Make College Admin
+</a>
+        {% csrf_token %}
+        <select name="role">
+          <option value="student" {% if selected_role == 'student' %}selected{% endif %}>Student</option>
+<option value="club_admin" {% if selected_role == 'club_admin' %}selected{% endif %}>Club Admin</option>
+<option value="college_admin" {% if selected_role == 'college_admin' %}selected{% endif %}>College Admin</option>
+        </select>
+        <button type="submit">Update</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+
+</table>
+
+{% if not users %}
+<div class="empty-state">
+  <h3>No users found</h3>
+</div>
+{% endif %}
+
+{% endblock %}
